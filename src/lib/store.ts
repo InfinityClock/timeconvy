@@ -15,6 +15,11 @@ interface TimeBridgeState {
   hour12: boolean;
   recentPairs: TimezonePair[];
   favoritePairs: TimezonePair[];
+  /** True once we've auto-detected the visitor's location (or they've made their
+   * own choice) — guards against detecting again on a later visit, and against
+   * running detection twice from React Strict Mode's double effect invocation. */
+  hasDetectedLocation: boolean;
+  markLocationDetected: () => void;
   setFrom: (id: string) => void;
   setTo: (id: string) => void;
   setPair: (pair: TimezonePair) => void;
@@ -44,9 +49,11 @@ export const useTimeBridgeStore = create<TimeBridgeState>()(
       hour12: true,
       recentPairs: [],
       favoritePairs: [],
-      setFrom: (id) => set({ fromId: id }),
-      setTo: (id) => set({ toId: id }),
-      setPair: (pair) => set({ fromId: pair.from, toId: pair.to }),
+      hasDetectedLocation: false,
+      markLocationDetected: () => set({ hasDetectedLocation: true }),
+      setFrom: (id) => set({ fromId: id, hasDetectedLocation: true }),
+      setTo: (id) => set({ toId: id, hasDetectedLocation: true }),
+      setPair: (pair) => set({ fromId: pair.from, toId: pair.to, hasDetectedLocation: true }),
       swap: () => set({ fromId: get().toId, toId: get().fromId }),
       toggleHourFormat: () => set({ hour12: !get().hour12 }),
       addRecent: (pair) => {

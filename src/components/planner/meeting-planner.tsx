@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Clock3 } from "lucide-react";
 import { useTimeBridgeStore } from "@/lib/store";
 import { TIMEZONE_BY_ID } from "@/constants/timezones";
-import { findBestOverlaps, HOUR_CATEGORY_COLORS, HOUR_CATEGORY_LABELS } from "@/lib/timezone";
+import { findBestOverlaps, HOUR_CATEGORY_COLORS, HOUR_CATEGORY_LABELS, zoneAbbreviation } from "@/lib/timezone";
 import { HourCategory } from "@/lib/timezone";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,8 @@ export function MeetingPlanner() {
     });
     const end = start.plus({ minutes: durationMinutes });
     const fmt = hour12 ? "h:mm a" : "HH:mm";
-    return `${start.toFormat(fmt)} – ${end.toFormat(fmt)} (${baseZone.abbreviation})`;
+    const abbr = zoneAbbreviation(baseZone.timezone, start, baseZone.abbreviation);
+    return `${start.toFormat(fmt)} – ${end.toFormat(fmt)} (${abbr})`;
   }
 
   const windows = [
@@ -181,7 +182,7 @@ export function MeetingPlanner() {
             {zones.map((zone) => (
               <ZoneRow
                 key={zone.id}
-                label={zone.abbreviation}
+                label={zoneAbbreviation(zone.timezone, undefined, zone.abbreviation)}
                 title={zone.label.split(" (")[0]}
                 hourDts={hourRows.map((dt) => dt.setZone(zone.timezone))}
                 workingHours={plannerWorkingHours}
