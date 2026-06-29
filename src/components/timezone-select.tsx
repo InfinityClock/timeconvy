@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { TIMEZONE_OPTIONS, TIMEZONE_BY_ID } from "@/constants/timezones";
+import { TIMEZONE_OPTIONS, resolveTimezoneOption } from "@/constants/timezones";
+import { zoneAbbreviation } from "@/lib/timezone";
 
 interface TimezoneSelectProps {
   value: string;
@@ -22,8 +23,8 @@ interface TimezoneSelectProps {
 
 export function TimezoneSelect({ value, onChange, label }: TimezoneSelectProps) {
   const [open, setOpen] = useState(false);
-  const selected = TIMEZONE_BY_ID[value];
-  const abbreviations = TIMEZONE_OPTIONS.filter((tz) => tz.group === "abbreviation");
+  const selected = resolveTimezoneOption(value);
+  const abbreviations = TIMEZONE_OPTIONS.filter((tz) => tz.group === "abbreviation" && !tz.hidden);
   const cities = TIMEZONE_OPTIONS.filter((tz) => tz.group === "city");
 
   return (
@@ -43,7 +44,14 @@ export function TimezoneSelect({ value, onChange, label }: TimezoneSelectProps) 
           <span className="truncate text-base">
             {selected ? selected.label : "Select a timezone"}
           </span>
-          <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+          <span className="flex shrink-0 items-center gap-2">
+            {selected && (
+              <span className="text-xs font-medium text-muted-foreground">
+                {zoneAbbreviation(selected.timezone, undefined, selected.abbreviation)}
+              </span>
+            )}
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+          </span>
         </PopoverTrigger>
         <PopoverContent className="w-[320px] p-0 rounded-xl" align="start">
           <Command>
@@ -61,6 +69,7 @@ export function TimezoneSelect({ value, onChange, label }: TimezoneSelectProps) 
                     }}
                   >
                     <span className="font-medium">{tz.label}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{zoneAbbreviation(tz.timezone, undefined, tz.abbreviation)}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -75,7 +84,7 @@ export function TimezoneSelect({ value, onChange, label }: TimezoneSelectProps) 
                     }}
                   >
                     <span className="font-medium">{tz.label}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">{tz.abbreviation}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{zoneAbbreviation(tz.timezone, undefined, tz.abbreviation)}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

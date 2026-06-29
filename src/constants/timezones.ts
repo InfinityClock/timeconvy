@@ -1,37 +1,42 @@
+import { cityNameFromIana } from "@/lib/timezone";
+
 export interface TimezoneOption {
   id: string;
   label: string; // shown in dropdown, e.g. "India Standard Time (IST)"
-  abbreviation: string;
+  abbreviation: string; // seed abbreviation for search; DISPLAY should use zoneAbbreviation(timezone) instead
   timezone: string; // IANA id
   keywords: string; // extra search terms (city names, country)
   group: "abbreviation" | "city";
+  /** True for a DST-variant duplicate (e.g. "edt") that's kept resolvable for old saved
+   * preferences but hidden from the dropdown in favor of its DST-neutral canonical entry. */
+  hidden?: boolean;
 }
 
 export const TIMEZONE_OPTIONS: TimezoneOption[] = [
   { id: "ist", label: "India Standard Time (IST)", abbreviation: "IST", timezone: "Asia/Kolkata", keywords: "india mumbai delhi bangalore chennai new delhi bengaluru", group: "abbreviation" },
-  { id: "est", label: "Eastern Standard Time (EST)", abbreviation: "EST", timezone: "America/New_York", keywords: "new york eastern us usa east coast washington boston", group: "abbreviation" },
-  { id: "edt", label: "Eastern Daylight Time (EDT)", abbreviation: "EDT", timezone: "America/New_York", keywords: "new york eastern daylight us usa", group: "abbreviation" },
-  { id: "cst", label: "Central Standard Time (CST)", abbreviation: "CST", timezone: "America/Chicago", keywords: "chicago central us usa houston dallas", group: "abbreviation" },
-  { id: "cdt", label: "Central Daylight Time (CDT)", abbreviation: "CDT", timezone: "America/Chicago", keywords: "chicago central daylight us usa", group: "abbreviation" },
-  { id: "pst", label: "Pacific Standard Time (PST)", abbreviation: "PST", timezone: "America/Los_Angeles", keywords: "los angeles pacific us usa san francisco seattle california", group: "abbreviation" },
-  { id: "pdt", label: "Pacific Daylight Time (PDT)", abbreviation: "PDT", timezone: "America/Los_Angeles", keywords: "los angeles pacific daylight us usa california", group: "abbreviation" },
-  { id: "mst", label: "Mountain Standard Time (MST)", abbreviation: "MST", timezone: "America/Denver", keywords: "denver mountain us usa phoenix arizona", group: "abbreviation" },
-  { id: "mdt", label: "Mountain Daylight Time (MDT)", abbreviation: "MDT", timezone: "America/Denver", keywords: "denver mountain daylight us usa", group: "abbreviation" },
-  { id: "ast", label: "Atlantic Standard Time (AST)", abbreviation: "AST", timezone: "America/Halifax", keywords: "halifax atlantic canada puerto rico", group: "abbreviation" },
-  { id: "gmt", label: "Greenwich Mean Time (GMT)", abbreviation: "GMT", timezone: "Europe/London", keywords: "london uk united kingdom england", group: "abbreviation" },
-  { id: "bst", label: "British Summer Time (BST)", abbreviation: "BST", timezone: "Europe/London", keywords: "london uk united kingdom england summer", group: "abbreviation" },
+  { id: "est", label: "Eastern Time (ET)", abbreviation: "EST", timezone: "America/New_York", keywords: "new york eastern us usa east coast washington boston edt est", group: "abbreviation" },
+  { id: "edt", label: "Eastern Time (ET)", abbreviation: "EDT", timezone: "America/New_York", keywords: "new york eastern daylight us usa", group: "abbreviation", hidden: true },
+  { id: "cst", label: "Central Time (CT)", abbreviation: "CST", timezone: "America/Chicago", keywords: "chicago central us usa houston dallas cdt cst", group: "abbreviation" },
+  { id: "cdt", label: "Central Time (CT)", abbreviation: "CDT", timezone: "America/Chicago", keywords: "chicago central daylight us usa", group: "abbreviation", hidden: true },
+  { id: "pst", label: "Pacific Time (PT)", abbreviation: "PST", timezone: "America/Los_Angeles", keywords: "los angeles pacific us usa san francisco seattle california pdt pst", group: "abbreviation" },
+  { id: "pdt", label: "Pacific Time (PT)", abbreviation: "PDT", timezone: "America/Los_Angeles", keywords: "los angeles pacific daylight us usa california", group: "abbreviation", hidden: true },
+  { id: "mst", label: "Mountain Time (MT)", abbreviation: "MST", timezone: "America/Denver", keywords: "denver mountain us usa phoenix arizona mdt mst", group: "abbreviation" },
+  { id: "mdt", label: "Mountain Time (MT)", abbreviation: "MDT", timezone: "America/Denver", keywords: "denver mountain daylight us usa", group: "abbreviation", hidden: true },
+  { id: "ast", label: "Atlantic Time (AT)", abbreviation: "AST", timezone: "America/Halifax", keywords: "halifax atlantic canada puerto rico", group: "abbreviation" },
+  { id: "gmt", label: "UK Time (London)", abbreviation: "GMT", timezone: "Europe/London", keywords: "london uk united kingdom england bst gmt", group: "abbreviation" },
+  { id: "bst", label: "UK Time (London)", abbreviation: "BST", timezone: "Europe/London", keywords: "london uk united kingdom england summer", group: "abbreviation", hidden: true },
   { id: "utc", label: "Coordinated Universal Time (UTC)", abbreviation: "UTC", timezone: "UTC", keywords: "universal coordinated zulu", group: "abbreviation" },
-  { id: "cet", label: "Central European Time (CET)", abbreviation: "CET", timezone: "Europe/Paris", keywords: "paris france berlin germany madrid spain rome italy amsterdam europe", group: "abbreviation" },
-  { id: "cest", label: "Central European Summer Time (CEST)", abbreviation: "CEST", timezone: "Europe/Paris", keywords: "paris france berlin germany madrid spain rome italy amsterdam europe summer", group: "abbreviation" },
-  { id: "eet", label: "Eastern European Time (EET)", abbreviation: "EET", timezone: "Europe/Athens", keywords: "athens greece cairo egypt helsinki", group: "abbreviation" },
-  { id: "eest", label: "Eastern European Summer Time (EEST)", abbreviation: "EEST", timezone: "Europe/Athens", keywords: "athens greece cairo egypt helsinki summer", group: "abbreviation" },
+  { id: "cet", label: "Central European Time (CET)", abbreviation: "CET", timezone: "Europe/Paris", keywords: "paris france berlin germany madrid spain rome italy amsterdam europe cest cet", group: "abbreviation" },
+  { id: "cest", label: "Central European Time (CET)", abbreviation: "CEST", timezone: "Europe/Paris", keywords: "paris france berlin germany madrid spain rome italy amsterdam europe summer", group: "abbreviation", hidden: true },
+  { id: "eet", label: "Eastern European Time (EET)", abbreviation: "EET", timezone: "Europe/Athens", keywords: "athens greece cairo egypt helsinki eest eet", group: "abbreviation" },
+  { id: "eest", label: "Eastern European Time (EET)", abbreviation: "EEST", timezone: "Europe/Athens", keywords: "athens greece cairo egypt helsinki summer", group: "abbreviation", hidden: true },
   { id: "jst", label: "Japan Standard Time (JST)", abbreviation: "JST", timezone: "Asia/Tokyo", keywords: "tokyo japan osaka", group: "abbreviation" },
   { id: "kst", label: "Korea Standard Time (KST)", abbreviation: "KST", timezone: "Asia/Seoul", keywords: "seoul korea south korea", group: "abbreviation" },
   { id: "sgt", label: "Singapore Time (SGT)", abbreviation: "SGT", timezone: "Asia/Singapore", keywords: "singapore", group: "abbreviation" },
-  { id: "aest", label: "Australian Eastern Standard Time (AEST)", abbreviation: "AEST", timezone: "Australia/Sydney", keywords: "sydney australia melbourne brisbane canberra", group: "abbreviation" },
-  { id: "aedt", label: "Australian Eastern Daylight Time (AEDT)", abbreviation: "AEDT", timezone: "Australia/Sydney", keywords: "sydney australia melbourne canberra summer daylight", group: "abbreviation" },
-  { id: "nzst", label: "New Zealand Standard Time (NZST)", abbreviation: "NZST", timezone: "Pacific/Auckland", keywords: "auckland new zealand wellington", group: "abbreviation" },
-  { id: "nzdt", label: "New Zealand Daylight Time (NZDT)", abbreviation: "NZDT", timezone: "Pacific/Auckland", keywords: "auckland new zealand wellington summer daylight", group: "abbreviation" },
+  { id: "aest", label: "Australian Eastern Time (AET)", abbreviation: "AEST", timezone: "Australia/Sydney", keywords: "sydney australia melbourne brisbane canberra aedt aest", group: "abbreviation" },
+  { id: "aedt", label: "Australian Eastern Time (AET)", abbreviation: "AEDT", timezone: "Australia/Sydney", keywords: "sydney australia melbourne canberra summer daylight", group: "abbreviation", hidden: true },
+  { id: "nzst", label: "New Zealand Time (NZT)", abbreviation: "NZST", timezone: "Pacific/Auckland", keywords: "auckland new zealand wellington nzdt nzst", group: "abbreviation" },
+  { id: "nzdt", label: "New Zealand Time (NZT)", abbreviation: "NZDT", timezone: "Pacific/Auckland", keywords: "auckland new zealand wellington summer daylight", group: "abbreviation", hidden: true },
   { id: "dubai", label: "Gulf Standard Time (GST)", abbreviation: "GST", timezone: "Asia/Dubai", keywords: "dubai uae united arab emirates abu dhabi", group: "abbreviation" },
   { id: "hkt", label: "Hong Kong Time (HKT)", abbreviation: "HKT", timezone: "Asia/Hong_Kong", keywords: "hong kong", group: "abbreviation" },
   { id: "ict", label: "Indochina Time (ICT)", abbreviation: "ICT", timezone: "Asia/Bangkok", keywords: "bangkok thailand vietnam", group: "abbreviation" },
@@ -72,29 +77,75 @@ export const TIMEZONE_BY_ID: Record<string, TimezoneOption> = TIMEZONE_OPTIONS.r
   {} as Record<string, TimezoneOption>
 );
 
-export const QUICK_PRESETS: { from: string; to: string }[] = [
-  { from: "gmt", to: "ist" },
-  { from: "gmt", to: "est" },
-  { from: "gmt", to: "cst" },
-  { from: "gmt", to: "pst" },
-  { from: "gmt", to: "mst" },
-  { from: "gmt", to: "utc" },
-  { from: "ist", to: "est" },
-  { from: "ist", to: "edt" },
-  { from: "ist", to: "cst" },
-  { from: "ist", to: "cdt" },
-  { from: "ist", to: "pst" },
-  { from: "ist", to: "pdt" },
-  { from: "ist", to: "mst" },
-  { from: "ist", to: "mdt" },
-  { from: "ist", to: "ast" },
-  { from: "ist", to: "gmt" },
-  { from: "ist", to: "utc" },
-  { from: "est", to: "ist" },
-  { from: "est", to: "pst" },
-  { from: "est", to: "cst" },
-  { from: "est", to: "mst" },
-  { from: "pst", to: "ist" },
-  { from: "cst", to: "ist" },
-  { from: "utc", to: "ist" },
-];
+/**
+ * IANA publishes some zones as backward-compatibility "links" to a canonical
+ * zone — e.g. browsers/OSes on older tzdata report "Asia/Calcutta" even though
+ * the canonical id is "Asia/Kolkata". Normalize the common ones so detection
+ * still snaps to our curated entry instead of falling through to a synthesized one.
+ */
+const LEGACY_TZ_ALIASES: Record<string, string> = {
+  "Asia/Calcutta": "Asia/Kolkata",
+  "Asia/Rangoon": "Asia/Yangon",
+  "Europe/Kiev": "Europe/Kyiv",
+  "America/Indianapolis": "America/Indiana/Indianapolis",
+};
+
+/**
+ * Resolves any id to a TimezoneOption — curated ids hit TIMEZONE_BY_ID directly;
+ * anything else is treated as a raw IANA zone (e.g. "Asia/Kathmandu") and a
+ * TimezoneOption is synthesized on the fly, so detection works for every
+ * IANA zone, not just the ~50 we've curated.
+ */
+export function resolveTimezoneOption(idOrIana: string): TimezoneOption | undefined {
+  const curatedById = TIMEZONE_BY_ID[idOrIana];
+  if (curatedById) return curatedById;
+
+  const canonicalIana = LEGACY_TZ_ALIASES[idOrIana] ?? idOrIana;
+  const curatedByZone = TIMEZONE_OPTIONS.find(
+    (tz) => tz.timezone === canonicalIana && tz.group === "abbreviation" && !tz.hidden
+  );
+  if (curatedByZone) return curatedByZone;
+
+  if (!canonicalIana.includes("/") && canonicalIana !== "UTC") return undefined;
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: canonicalIana });
+  } catch {
+    return undefined;
+  }
+  const city = cityNameFromIana(canonicalIana);
+  return {
+    id: canonicalIana,
+    label: city,
+    abbreviation: city,
+    timezone: canonicalIana,
+    keywords: canonicalIana.replace(/[/_]/g, " "),
+    group: "city",
+  };
+}
+
+export type Region = "india" | "us" | "europe" | "other";
+
+export function getRegionForTimezone(iana: string): Region {
+  if (iana === "Asia/Kolkata" || iana === "Asia/Calcutta") return "india";
+  if (iana.startsWith("America/")) return "us";
+  if (iana.startsWith("Europe/")) return "europe";
+  return "other";
+}
+
+/** Ordered list of suggested "To" zone ids per region, most relevant first. */
+const SUGGESTIONS_BY_REGION: Record<Region, string[]> = {
+  india: ["est", "cst", "pst", "gmt", "utc", "mst", "london", "dubai", "singapore"],
+  us: ["ist", "gmt", "utc", "london", "dubai", "singapore", "tokyo"],
+  europe: ["ist", "est", "pst", "gmt", "utc"],
+  other: ["ist", "est", "gmt", "utc", "singapore"],
+};
+
+/** Smart default "To" zone plus quick-preset pairs for a freshly detected "From" zone. */
+export function getSmartDefaults(fromId: string): { toId: string; presets: { from: string; to: string }[] } {
+  const fromTz = resolveTimezoneOption(fromId);
+  const region = fromTz ? getRegionForTimezone(fromTz.timezone) : "other";
+  const suggestions = SUGGESTIONS_BY_REGION[region].filter((id) => id !== fromId);
+  const toId = suggestions[0] ?? "utc";
+  const presets = suggestions.slice(0, 5).map((to) => ({ from: fromId, to }));
+  return { toId, presets };
+}

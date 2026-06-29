@@ -12,6 +12,33 @@ export function isDST(timezone: string): boolean {
   return DateTime.now().setZone(timezone).isInDST;
 }
 
+/**
+ * The real abbreviation a clock in this IANA zone shows right now (or at `dt`),
+ * e.g. "EST" in January and "EDT" in July for America/New_York. Never hardcode
+ * an abbreviation for a DST-observing zone — always derive it from the date.
+ *
+ * ICU (which Luxon's offsetNameShort relies on) doesn't have a short named
+ * abbreviation for every zone — e.g. Asia/Kolkata resolves to "GMT+5:30"
+ * rather than "IST". When that happens, `fallback` (a curated static
+ * abbreviation, safe for zones that never observe DST) is used instead.
+ */
+export function zoneAbbreviation(
+  timezone: string,
+  dt: DateTime = DateTime.now(),
+  fallback?: string
+): string {
+  const computed = dt.setZone(timezone).offsetNameShort;
+  const looksLikeRealAbbreviation = computed && /^[A-Za-z]{2,6}$/.test(computed);
+  if (looksLikeRealAbbreviation) return computed;
+  return fallback ?? computed ?? formatUtcOffset(dt.setZone(timezone));
+}
+
+/** Human-friendly label for an arbitrary IANA zone id, e.g. "Asia/Kolkata" -> "Kolkata". */
+export function cityNameFromIana(timezone: string): string {
+  const parts = timezone.split("/");
+  return (parts[parts.length - 1] ?? timezone).replace(/_/g, " ");
+}
+
 export function isDayTime(dt: DateTime): boolean {
   return dt.hour >= 6 && dt.hour < 18;
 }
