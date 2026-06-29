@@ -13,19 +13,50 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = "https://timeconvy.vercel.app";
+
 export const metadata: Metadata = {
-  title: "TimeBridge — Convert Time Zones Instantly",
-  description: "Convert time between any time zones instantly.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "TimeConvy — Convert Time Zones Instantly",
+    template: "%s — TimeConvy",
+  },
+  description:
+    "Convert time between any two time zones instantly. Free, fast, and accurate with automatic daylight saving time support.",
+  keywords: [
+    "time zone converter",
+    "IST to EST",
+    "GMT to IST",
+    "time difference calculator",
+    "meeting time planner",
+    "world clock",
+  ],
+  alternates: { canonical: SITE_URL },
   openGraph: {
-    title: "TimeBridge",
-    description: "Convert time between any time zones instantly.",
+    title: "TimeConvy — Convert Time Zones Instantly",
+    description:
+      "Convert time between any two time zones instantly. Free, fast, and accurate with automatic daylight saving time support.",
     type: "website",
+    url: SITE_URL,
+    siteName: "TimeConvy",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TimeBridge",
-    description: "Convert time between any time zones instantly.",
+    title: "TimeConvy — Convert Time Zones Instantly",
+    description: "Convert time between any two time zones instantly.",
   },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "TimeConvy",
+  url: SITE_URL,
+  applicationCategory: "UtilityApplication",
+  operatingSystem: "Any",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  description:
+    "Convert time between any two time zones instantly. Free, fast, and accurate with automatic daylight saving time support.",
 };
 
 export default function RootLayout({
@@ -39,6 +70,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider
           attribute="class"
