@@ -80,19 +80,6 @@ export function getHourCategory(hour: number, working: WorkingHours): HourCatego
   return "night";
 }
 
-export const HOUR_CATEGORY_COLORS: Record<HourCategory, string> = {
-  business: "bg-[var(--success)]/80",
-  morning: "bg-[var(--warning)]/80",
-  night: "bg-blue-500/60",
-  sleeping: "bg-muted",
-};
-
-export const HOUR_CATEGORY_LABELS: Record<HourCategory, string> = {
-  business: "Business hours",
-  morning: "Morning",
-  night: "Night",
-  sleeping: "Sleeping hours",
-};
 
 export interface OverlapWindow {
   startHour: number; // hour in baseTimezone, 0-23 (may be fractional for 30-min granularity)
@@ -155,4 +142,36 @@ export function findBestOverlaps(
     oneHour: longestRunFrom(2),
     twoHour: longestRunFrom(4),
   };
+}
+
+export type OverlapQuality = "excellent" | "acceptable" | "poor";
+
+/**
+ * For each 30-minute slot of the day (in `baseTimezone`'s reference frame),
+ * what fraction of the given zones are within working hours at that instant.
+ * Used to paint a green/yellow/red overlap-quality strip across a multi-zone timeline.
+ */
+export function computeOverlapStrip(
+  timezones: string[],
+  workingHours: WorkingHours,
+  baseTimezone: string,
+  baseDate: DateTime = DateTime.now()
+): OverlapQuality[] {
+  const strip: OverlapQuality[] = [];
+  for (let slot = 0; slot < 48; slot++) {
+    const minutesFromMidnight = slot * 30;
+    const hour = Math.floor(minutesFromMidnight / 60);
+    const minute = minutesFromMidnight % 60;
+    const baseDt = baseDate.setZone(baseTimezone).set({ hour, minute, second: 0, millisecond: 0 });
+
+    const availableCount = timezones.filter((tz) => {
+      const local = baseDt.setZone(tz);
+      const localMinutes = local.hour * 60 + local.minute;
+      return localMinutes >= workingHours.start * 60 && localMinutes < workingHours.end * 60;
+    }).length;
+
+    const ratio = timezones.length === 0 ? 0 : availableCount / timezones.length;
+    strip.push(ratio === 1 ? "excellent" : ratio >= 0.5 ? "acceptable" : "poor");
+  }
+  return strip;
 }

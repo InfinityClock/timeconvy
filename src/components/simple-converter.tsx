@@ -7,7 +7,7 @@ import { ArrowRightLeft, Check, Link2, Moon, Star, Sun } from "lucide-react";
 import { TimezoneSelect } from "@/components/timezone-select";
 import { DateField } from "@/components/date-field";
 import { TimeField } from "@/components/time-field";
-import { DualTimeline } from "@/components/dual-timeline";
+import { TimelineGroup } from "@/components/timeline/timeline-group";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { resolveTimezoneOption, getSmartDefaults } from "@/constants/timezones";
@@ -175,6 +175,12 @@ export function SimpleConverter() {
   const favorite = isFavorite(pair);
   const quickPresets = useMemo(() => getSmartDefaults(fromId).presets, [fromId]);
 
+  function handleScrub(hour: number) {
+    const h = Math.floor(hour);
+    const m = Math.round((hour - h) * 60);
+    setTime(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+  }
+
   function shareUrl() {
     const params = new URLSearchParams({ from: fromId, to: toId, date, time });
     return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
@@ -319,13 +325,15 @@ export function SimpleConverter() {
         </div>
 
         <div className="mt-8">
-          <DualTimeline
-            fromLabel={fromAbbr}
-            toLabel={toAbbr}
-            fromHourDts={fromHourDts}
-            toHourDts={toHourDts}
-            selectedHour={fromDt.hour}
+          <TimelineGroup
+            zones={[
+              { id: "from", label: fromTz?.label ?? fromAbbr, abbreviation: fromAbbr, hourDts: fromHourDts },
+              { id: "to", label: toTz?.label ?? toAbbr, abbreviation: toAbbr, hourDts: toHourDts },
+            ]}
+            workingHours={{ start: 9, end: 17 }}
             hour12={hour12}
+            selectedHour={fromDt.hour + fromDt.minute / 60}
+            onScrub={handleScrub}
           />
         </div>
       </div>

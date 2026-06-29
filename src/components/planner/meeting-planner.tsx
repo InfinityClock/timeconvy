@@ -6,14 +6,11 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Clock3 } from "lucide-react";
 import { useTimeBridgeStore } from "@/lib/store";
 import { TIMEZONE_BY_ID } from "@/constants/timezones";
-import { findBestOverlaps, HOUR_CATEGORY_COLORS, HOUR_CATEGORY_LABELS, zoneAbbreviation } from "@/lib/timezone";
-import { HourCategory } from "@/lib/timezone";
+import { computeOverlapStrip, findBestOverlaps, zoneAbbreviation } from "@/lib/timezone";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ZoneRow } from "@/components/planner/zone-row";
+import { TimelineGroup } from "@/components/timeline/timeline-group";
 import { AddZoneButton } from "@/components/planner/add-zone-button";
-import { cn } from "@/lib/utils";
 
 const PRESETS = [
   { label: "9 – 5", start: 9, end: 17 },
@@ -52,6 +49,11 @@ export function MeetingPlanner() {
       baseZone.timezone
     );
   }, [zones, plannerWorkingHours, baseZone]);
+
+  const overlapStrip = useMemo(() => {
+    if (!baseZone) return undefined;
+    return computeOverlapStrip(zones.map((z) => z.timezone), plannerWorkingHours, baseZone.timezone, today);
+  }, [zones, plannerWorkingHours, baseZone, today]);
 
   function formatWindow(startHour: number, durationMinutes: number) {
     if (!baseZone) return "";
@@ -168,32 +170,32 @@ export function MeetingPlanner() {
           ))}
         </div>
 
-        <div className="my-6 flex flex-wrap items-center justify-center gap-2">
-          {(Object.keys(HOUR_CATEGORY_LABELS) as HourCategory[]).map((cat) => (
-            <Badge key={cat} variant="secondary" className="gap-1.5 rounded-full">
-              <span className={cn("size-2 rounded-full", HOUR_CATEGORY_COLORS[cat])} />
-              {HOUR_CATEGORY_LABELS[cat]}
-            </Badge>
-          ))}
-        </div>
+        <TimelineGroup
+          zones={zones.map((zone) => ({
+            id: zone.id,
+            label: zone.label.split(" (")[0],
+            abbreviation: zoneAbbreviation(zone.timezone, undefined, zone.abbreviation),
+            hourDts: hourRows.map((dt) => dt.setZone(zone.timezone)),
+          }))}
+          workingHours={plannerWorkingHours}
+          hour12={hour12}
+          selectedHour={today.setZone(baseZone?.timezone ?? "UTC").hour}
+          overlapStrip={overlapStrip}
+        />
 
-        <div className="flex flex-col gap-3 overflow-x-auto">
-          <div className="min-w-[720px] space-y-3">
-            {zones.map((zone) => (
-              <ZoneRow
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {zones.length > 1 &&
+            zones.map((zone) => (
+              <Button
                 key={zone.id}
-                label={zoneAbbreviation(zone.timezone, undefined, zone.abbreviation)}
-                title={zone.label.split(" (")[0]}
-                hourDts={hourRows.map((dt) => dt.setZone(zone.timezone))}
-                workingHours={plannerWorkingHours}
-                hour12={hour12}
-                onRemove={zones.length > 1 ? () => removePlannerZone(zone.id) : undefined}
-              />
+                variant="ghost"
+                size="sm"
+                className="rounded-full bg-muted text-xs"
+                onClick={() => removePlannerZone(zone.id)}
+              >
+                Remove {zone.label.split(" (")[0]} ✕
+              </Button>
             ))}
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-center">
           <AddZoneButton excludeIds={plannerZoneIds} onAdd={addPlannerZone} />
         </div>
       </div>
