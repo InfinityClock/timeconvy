@@ -21,7 +21,11 @@ export function DualTimeline({
   hour12,
 }: DualTimelineProps) {
   return (
-    <div className="overflow-x-auto">
+    <div
+      role="group"
+      aria-label={`24-hour comparison between ${fromLabel} and ${toLabel}`}
+      className="overflow-x-auto"
+    >
       <div className="min-w-[720px]">
         <TimelineRow label={fromLabel} dts={fromHourDts} selectedHour={selectedHour} hour12={hour12} />
         <div className="my-2 h-px bg-border" />
@@ -46,19 +50,23 @@ function TimelineRow({
     <div className="flex items-center gap-3">
       <span className="w-16 shrink-0 text-sm font-semibold">{label}</span>
       <div className="grid flex-1 grid-cols-[repeat(24,minmax(0,1fr))] gap-1">
-        {dts.map((dt, i) => (
-          <div
-            key={i}
-            className={cn(
-              "flex h-9 items-center justify-center rounded-md text-[10px] font-medium text-muted-foreground",
-              i === selectedHour
-                ? "bg-blue-600 text-white"
-                : "bg-muted"
-            )}
-          >
-            {dt.toFormat(hour12 ? "h a" : "HH")}
-          </div>
-        ))}
+        {dts.map((dt, i) => {
+          const isSelected = i === selectedHour;
+          return (
+            <div
+              key={i}
+              role="img"
+              aria-label={`${label} ${dt.toFormat(hour12 ? "h a" : "HH:mm")}${isSelected ? " — selected hour" : ""}`}
+              title={dt.toFormat(hour12 ? "h:mm a" : "HH:mm")}
+              className={cn(
+                "flex h-9 items-center justify-center rounded-md text-[10px] font-medium text-muted-foreground transition-colors",
+                isSelected ? "bg-blue-600 text-white" : "bg-muted"
+              )}
+            >
+              {dt.toFormat(hour12 ? "h a" : "HH")}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -23,6 +23,8 @@ interface TimezoneSelectProps {
 export function TimezoneSelect({ value, onChange, label }: TimezoneSelectProps) {
   const [open, setOpen] = useState(false);
   const selected = TIMEZONE_BY_ID[value];
+  const abbreviations = TIMEZONE_OPTIONS.filter((tz) => tz.group === "abbreviation");
+  const cities = TIMEZONE_OPTIONS.filter((tz) => tz.group === "city");
 
   return (
     <div className="flex-1">
@@ -48,8 +50,8 @@ export function TimezoneSelect({ value, onChange, label }: TimezoneSelectProps) 
             <CommandInput placeholder="Search city, country, or abbreviation…" />
             <CommandList>
               <CommandEmpty>No results found.</CommandEmpty>
-              <CommandGroup>
-                {TIMEZONE_OPTIONS.map((tz) => (
+              <CommandGroup heading="Time Zone Abbreviations">
+                {abbreviations.map((tz) => (
                   <CommandItem
                     key={tz.id}
                     value={`${tz.label} ${tz.abbreviation} ${tz.keywords}`}
@@ -59,6 +61,21 @@ export function TimezoneSelect({ value, onChange, label }: TimezoneSelectProps) 
                     }}
                   >
                     <span className="font-medium">{tz.label}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandGroup heading="Cities">
+                {cities.map((tz) => (
+                  <CommandItem
+                    key={tz.id}
+                    value={`${tz.label} ${tz.abbreviation} ${tz.keywords}`}
+                    onSelect={() => {
+                      onChange(tz.id);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="font-medium">{tz.label}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{tz.abbreviation}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
