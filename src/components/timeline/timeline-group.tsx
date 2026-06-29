@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { DateTime } from "luxon";
 import { motion } from "framer-motion";
 import { Maximize2, Minimize2 } from "lucide-react";
@@ -86,10 +86,6 @@ export function TimelineGroup({
     if (e.key === "ArrowLeft") onScrub(Math.max(0, selectedHour - step));
   }
 
-  // Avoid a layout flash before the fade-in animation runs.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   const displayHour = hoverHour ?? selectedHour;
   const indicatorPct = (selectedHour / 24) * 100;
   const hoverPct = hoverHour !== null ? (hoverHour / 24) * 100 : null;
@@ -97,7 +93,7 @@ export function TimelineGroup({
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
-      animate={mounted ? { opacity: 1, y: 0 } : undefined}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="select-none"
     >

@@ -8,10 +8,6 @@ export function formatUtcOffset(dt: DateTime): string {
   return `UTC${dt.toFormat("ZZ")}`;
 }
 
-export function isDST(timezone: string): boolean {
-  return DateTime.now().setZone(timezone).isInDST;
-}
-
 /**
  * The real abbreviation a clock in this IANA zone shows right now (or at `dt`),
  * e.g. "EST" in January and "EDT" in July for America/New_York. Never hardcode

@@ -17,7 +17,6 @@ import {
   formatTime,
   formatUtcOffset,
   isDayTime,
-  isDST,
   isWorkingHour,
   zoneAbbreviation,
 } from "@/lib/timezone";
@@ -29,6 +28,15 @@ function todayStr() {
 
 function nowTimeStr() {
   return DateTime.now().toFormat("HH:mm");
+}
+
+/** Guards against a malformed shared URL (e.g. ?date=not-a-date) crashing the app. */
+function isValidDateStr(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && DateTime.fromFormat(value, "yyyy-MM-dd").isValid;
+}
+
+function isValidTimeStr(value: string): boolean {
+  return /^\d{2}:\d{2}$/.test(value) && DateTime.fromFormat(value, "HH:mm").isValid;
 }
 
 /**
@@ -79,8 +87,16 @@ export function SimpleConverter() {
     isFavorite,
   } = useTimeBridgeStore();
 
-  const [date, setDate] = useState(todayStr);
-  const [time, setTime] = useState(nowTimeStr);
+  // Lazy-initialized from the URL (?date=...&time=...) on first render — no effect
+  // needed since useSearchParams already reflects the URL synchronously at mount.
+  const [date, setDate] = useState(() => {
+    const d = searchParams.get("date");
+    return d && isValidDateStr(d) ? d : todayStr();
+  });
+  const [time, setTime] = useState(() => {
+    const t = searchParams.get("time");
+    return t && isValidTimeStr(t) ? t : nowTimeStr();
+  });
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
 
@@ -105,18 +121,17 @@ export function SimpleConverter() {
       setTo(smartToId);
     }
     detectAndApply();
-  }, [setFrom, setTo]);
+  }, [setFrom, setTo, markLocationDetected]);
 
-  // Hydrate from a shared URL (?from=ist&to=est&date=...&time=...) on first render.
+  // Hydrate the shared "From"/"To" zones from a shared URL (?from=ist&to=est) on
+  // first render. Date/time are handled above via lazy useState since they're
+  // local React state; from/to live in the external Zustand store, so syncing
+  // them from the URL still belongs in an effect.
   useEffect(() => {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
-    const d = searchParams.get("date");
-    const t = searchParams.get("time");
     if (from && resolveTimezoneOption(from)) setFrom(from);
     if (to && resolveTimezoneOption(to)) setTo(to);
-    if (d) setDate(d);
-    if (t) setTime(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -289,8 +304,8 @@ export function SimpleConverter() {
           <InfoTile label="Difference" value={formatDiff(offsetDiffMinutes)} />
           <InfoTile label={`${fromAbbr} Offset`} value={formatUtcOffset(fromDt)} />
           <InfoTile label={`${toAbbr} Offset`} value={formatUtcOffset(toDt)} />
-          <InfoTile label={`${fromAbbr} DST`} value={isDST(fromTz?.timezone ?? "UTC") ? "Active" : "Standard"} />
-          <InfoTile label={`${toAbbr} DST`} value={isDST(toTz?.timezone ?? "UTC") ? "Active" : "Standard"} />
+          <InfoTile label={`${fromAbbr} DST`} value={fromDt.isInDST ? "Active" : "Standard"} />
+          <InfoTile label={`${toAbbr} DST`} value={toDt.isInDST ? "Active" : "Standard"} />
           <InfoTile
             label="Day / Night"
             value={

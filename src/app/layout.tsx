@@ -70,13 +70,20 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        {/*
+          Plain <script> is intentional here, not an oversight: JSON-LD must be
+          type="application/ld+json" and present in the initial HTML for SEO
+          crawlers. next/script defers insertion (wrong for SEO-critical data),
+          and React's suggested <template> alternative isn't recognized by
+          structured-data parsers. This triggers a harmless React 19 dev-only
+          console warning ("script tag... never executed when rendering on the
+          client") with no effect on the rendered HTML or production behavior.
+        */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-      </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
