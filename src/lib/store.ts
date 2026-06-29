@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { WorkingHours } from "@/lib/timezone";
 
 export interface TimezonePair {
   from: string;
@@ -22,6 +23,13 @@ interface TimeBridgeState {
   addRecent: (pair: TimezonePair) => void;
   toggleFavorite: (pair: TimezonePair) => void;
   isFavorite: (pair: TimezonePair) => boolean;
+
+  // Meeting planner state
+  plannerZoneIds: string[];
+  plannerWorkingHours: WorkingHours;
+  addPlannerZone: (id: string) => void;
+  removePlannerZone: (id: string) => void;
+  setPlannerWorkingHours: (wh: WorkingHours) => void;
 }
 
 function samePair(a: TimezonePair, b: TimezonePair) {
@@ -55,6 +63,17 @@ export const useTimeBridgeStore = create<TimeBridgeState>()(
         });
       },
       isFavorite: (pair) => get().favoritePairs.some((p) => samePair(p, pair)),
+
+      plannerZoneIds: ["ist", "est", "gmt", "sgt"],
+      plannerWorkingHours: { start: 9, end: 17 },
+      addPlannerZone: (id) => {
+        const current = get().plannerZoneIds;
+        if (current.includes(id)) return;
+        set({ plannerZoneIds: [...current, id] });
+      },
+      removePlannerZone: (id) =>
+        set({ plannerZoneIds: get().plannerZoneIds.filter((z) => z !== id) }),
+      setPlannerWorkingHours: (wh) => set({ plannerWorkingHours: wh }),
     }),
     { name: "timebridge-store" }
   )

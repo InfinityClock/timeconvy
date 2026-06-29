@@ -38,3 +38,94 @@ export function formatDiff(minutes: number): string {
   if (m === 0) return `${sign}${h} hr`;
   return `${sign}${h} hr ${m} min`;
 }
+
+export interface WorkingHours {
+  start: number; // 0-23
+  end: number; // 0-23
+}
+
+export type HourCategory = "business" | "morning" | "night" | "sleeping";
+
+export function getHourCategory(hour: number, working: WorkingHours): HourCategory {
+  if (hour >= working.start && hour < working.end) return "business";
+  if (hour >= 6 && hour < working.start) return "morning";
+  if (hour >= 22 || hour < 6) return "sleeping";
+  return "night";
+}
+
+export const HOUR_CATEGORY_COLORS: Record<HourCategory, string> = {
+  business: "bg-[var(--success)]/80",
+  morning: "bg-[var(--warning)]/80",
+  night: "bg-blue-500/60",
+  sleeping: "bg-muted",
+};
+
+export const HOUR_CATEGORY_LABELS: Record<HourCategory, string> = {
+  business: "Business hours",
+  morning: "Morning",
+  night: "Night",
+  sleeping: "Sleeping hours",
+};
+
+export interface OverlapWindow {
+  startHour: number; // hour in baseTimezone, 0-23 (may be fractional for 30-min granularity)
+  durationMinutes: number;
+}
+
+/**
+ * Finds the best overlap windows across all given IANA timezones' working hours,
+ * expressed as hours (0-23) in the `baseTimezone` reference frame, at 30-minute granularity.
+ */
+export function findBestOverlaps(
+  timezones: string[],
+  workingHours: WorkingHours,
+  baseTimezone: string,
+  baseDate: DateTime = DateTime.now()
+): { thirtyMin: OverlapWindow | null; oneHour: OverlapWindow | null; twoHour: OverlapWindow | null } {
+  const slots: boolean[] = new Array(48).fill(true);
+
+  for (let slot = 0; slot < 48; slot++) {
+    const minutesFromMidnight = slot * 30;
+    const hour = Math.floor(minutesFromMidnight / 60);
+    const minute = minutesFromMidnight % 60;
+    const baseDt = baseDate.setZone(baseTimezone).set({ hour, minute, second: 0, millisecond: 0 });
+
+    for (const tz of timezones) {
+      const local = baseDt.setZone(tz);
+      const localMinutes = local.hour * 60 + local.minute;
+      const startMinutes = workingHours.start * 60;
+      const endMinutes = workingHours.end * 60;
+      if (localMinutes < startMinutes || localMinutes >= endMinutes) {
+        slots[slot] = false;
+        break;
+      }
+    }
+  }
+
+  function longestRunFrom(requiredSlots: number): OverlapWindow | null {
+    let bestStart = -1;
+    let bestLen = 0;
+    let runStart = -1;
+    let runLen = 0;
+    for (let i = 0; i < 48; i++) {
+      if (slots[i]) {
+        if (runLen === 0) runStart = i;
+        runLen++;
+        if (runLen >= requiredSlots && runLen > bestLen) {
+          bestLen = runLen;
+          bestStart = runStart;
+        }
+      } else {
+        runLen = 0;
+      }
+    }
+    if (bestStart === -1) return null;
+    return { startHour: (bestStart * 30) / 60, durationMinutes: bestLen * 30 };
+  }
+
+  return {
+    thirtyMin: longestRunFrom(1),
+    oneHour: longestRunFrom(2),
+    twoHour: longestRunFrom(4),
+  };
+}
